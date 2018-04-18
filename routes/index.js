@@ -1,13 +1,12 @@
 var express = require('express');
 var router = express.Router();
+import { getUser } from '../controller/user'
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-router.get('/login', function(req, res) {
-  res.send({ code: 0, test: 'ok' })
-})
+router.post('/login', getUser)
 
 module.exports = router;
