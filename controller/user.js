@@ -1,39 +1,67 @@
 import mongoose from 'mongoose'
 import UserModal from '../models/user'
 
-const getUser = (req, res) => {
-    let { account, pwd } = req.body
+const mongoUrl = 'mongodb://localhost/taobao'
+
+const login = (req, res) => {
+    let { account, password } = req.body
     let error = null
-    mongoose.connect('mongodb://localhost/taobao', function(err) {
+    mongoose.connect(mongoUrl, function(err) {
         if (!err) {
             console.log('连接成功')
             UserModal.find(function(err, docs) {
-                console.log(docs)
-                console.log(account)
-                let arr = docs.filter(item => item.account === account)
-                console.log(arr)
+                let arr = docs.filter(item => String(item.account) === account)
                 if (arr.length === 0) {
                     error = '账号不存在'
-                } else {
-                    if (arr[0].pwd !== pwd) {
-                        error = '密码不正确'
-                    }
+                } else if (arr[0].password !== password){
+                    error = '密码不正确'
                 }
                 
                 if (error) {
-                    // res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'})
-                    console.log(error)
                     res.setHeader('Content-Type','text/javascript;charset=UTF-8');
-                    res.send(error);
+                    res.send({ success: false, error});
                 } else {
-                    res.end()
+                    res.send({ success: true,  uid: arr[0].uid })
                 }
+                // res.end()
                 
             })
         }
     })
 }
 
+const register = (req, res) => {
+    let { account, password } = req.body
+    let error = null
+    mongoose.connect(mongoUrl, err => {
+        if (!err) {
+            UserModal.find((err, docs) => {
+                let uid = docs.length + 1
+                let arr = docs.filter(item => String(item.account) === account)
+                if (arr.length > 0) {
+                    error = '账号已经存在'
+                }
+
+                if (!error) {
+                    let user = new UserModal({ uid, account: Number(account), password })
+                    user.save((err, docs) => {
+                        if (err) {
+                            error = '注册失败'
+                        }
+                    })
+                }
+
+                if (!error) {
+                    res.send({ success: true, uid })
+                } else {
+                    res.send({ success: false, error })
+                }
+            })
+        }
+    })
+}
+
 module.exports = {
-    getUser
+    login,
+    register
 }
