@@ -1,8 +1,8 @@
 var express = require('express');
 var router = express.Router();
 import { login, register } from '../controller/user'
-import { shopDetail } from '../controller/shop'
-import { addCart } from '../controller/cart'
+import { goodDetail } from '../controller/shop'
+import { addCart, cartList } from '../controller/cart'
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -13,8 +13,10 @@ router.post('/login', login)
 
 router.post('/register', register)
 
-router.get('/detail/:gid', shopDetail)
+router.get('/detail/:gid', goodDetail)
 
 router.post('/addCart', addCart)
+
+router.get('/cartList/:uid', cartList)
 
 module.exports = router

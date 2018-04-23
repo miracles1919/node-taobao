@@ -38,10 +38,18 @@ const goodsList = [{
         'http://p7exvs3xz.bkt.clouddn.com/mi5.jpg',
     ],
     shopid: 'xiaomi',
-    gid: 'xiaomi-1' 
+    gid: 'xiaomi-1'
 }]
 
-const shopDetail = (req, res) => {
+const shopList = [{
+    shopid: 'lilbetter',
+    name: 'libetter旗舰店'
+}, {
+    shopid: 'xiaomi',
+    name: '小米旗舰店'
+}]
+
+const goodDetail = (req, res) => {
     let { params } = req
     let filterList = goodsList.filter(item => item.gid === params.gid)
     if (filterList.length > 0) {
@@ -51,6 +59,10 @@ const shopDetail = (req, res) => {
     }
 }
 
+const shopInfo = (shopid) => {
+    let filterItem
+}
+
 module.exports = {
-    shopDetail
+    goodDetail
 }
