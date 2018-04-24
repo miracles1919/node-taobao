@@ -33,7 +33,7 @@ const goodsList = [{
       sort: {
         color: ['白色', '黑色']
       }
-    },
+  },
   imgList: [
       'http://p7exvs3xz.bkt.clouddn.com/mi1.jpg',
       'http://p7exvs3xz.bkt.clouddn.com/mi2.jpg',
