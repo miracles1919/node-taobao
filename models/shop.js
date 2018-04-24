@@ -8,10 +8,7 @@ const GoodSchema = Schema({
     price: Number,
     promoPrice: Number,
     active: String,
-    sort: {
-      size: [String],
-        color: [String],
-    }
+    sort: Object,
   },
   imgList: [String],
   shopid: String,

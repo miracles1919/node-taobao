@@ -30,9 +30,19 @@ const addCart = (req, res) => {
     })
 }
 
+const delCart = async (req, res) => {
+  let { uid, gid, select } = req.body
+  try {
+    await mongoose.connect(mongoUrl)
+    await CartModel.remove({ uid, gid, select })
+    res.send({ success: true, message: '删除成功' })
+  } catch (err) {
+    res.send({ success: false, error: err })
+  }
+}
+
 const cartList = async (req, res) => {
   let { params } = req
-  console.log(params)
   let goodsInfo = {} // 商品信息缓存
   let shopsInfo = {} // 店家信息缓存
   try {
@@ -76,5 +86,6 @@ const cartList = async (req, res) => {
 
 module.exports = {
     addCart,
-    cartList
+    cartList,
+    delCart
 }
