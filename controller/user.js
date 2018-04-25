@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
-import UserModal from '../models/user'
+import { UserModal, UserInfoModal } from '../models/user'
+import { addListener } from 'cluster';
 
 const mongoUrl = 'mongodb://localhost/taobao'
 
@@ -16,7 +17,7 @@ const login = (req, res) => {
                 } else if (arr[0].password !== password){
                     error = '密码不正确'
                 }
-                
+
                 if (error) {
                     res.setHeader('Content-Type','text/javascript;charset=UTF-8');
                     res.send({ success: false, error});
@@ -24,7 +25,7 @@ const login = (req, res) => {
                     res.send({ success: true,  uid: arr[0].uid })
                 }
                 // res.end()
-                
+
             })
         }
     })
@@ -61,7 +62,70 @@ const register = (req, res) => {
     })
 }
 
+const getUserInfo = async (req, res) => {
+  let { params } = req
+  try {
+    await mongoose.connect(mongoUrl)
+    let { addressList = [] } = await UserInfoModal.findOne(params) || {}
+    res.send({ success: true, addressList })
+  } catch (err) {
+    res.send({ success: false, error: err })
+  }
+}
+
+const setUserInfo = async (req, res) => {
+  let params = req.body
+  let { uid } = params
+  delete params.uid
+  try {
+    await mongoose.connect(mongoUrl)
+    let docs = await UserInfoModal.update({ uid }, params, { upsert:true })
+    res.send({ success: true })
+
+  } catch (err) {
+    res.send({ success: false, error: err })
+  }
+}
+
+const addAddress = async (req, res) => {
+  let { uid, name, phone, location, address } = req.body
+  try {
+    await mongoose.connect(mongoUrl)
+    let doc = await UserInfoModal.findOne({ uid })
+    let { addressList = [] } = doc || {}
+    addressList = addressList.map(({ name, phone, location, address }) => {
+      return { name, phone, location, address }
+    })
+    addressList.push({ name, phone, location, address })
+    await UserInfoModal.update({ uid }, { addressList }, { upsert: true })
+    res.send({ success: true, message: '添加成功' })
+  } catch (err) {
+    res.send({ success: false, error: err })
+  }
+}
+
+const delAddress = async (req, res) => {
+  let { uid, index } = req.body
+  try {
+    await mongoose.connect(mongoUrl)
+    let { addressList } = await UserInfoModal.findOne({ uid })
+    addressList = addressList.map(({ name, phone, location, address }) => {
+      return { name, phone, location, address }
+    })
+    addressList.splice(index, 1)
+    await UserInfoModal.update({ uid }, { addressList }, { upsert: true })
+    res.send({ success: true, message: '删除成功' })
+  } catch (err) {
+    res.send({ success: false, error: err })
+  }
+}
+
+
 module.exports = {
     login,
-    register
+    register,
+    getUserInfo,
+    setUserInfo,
+    addAddress,
+    delAddress
 }
