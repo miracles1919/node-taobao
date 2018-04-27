@@ -95,3 +95,41 @@ npm i babel-plugin-transform-object-rest-spread --save-dev
 
 require('babel-register');
 ```
+
+- async 异步循环
+
+```javascript
+// 举个例子
+let asyncFunc = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => { resolve(1) }, 0)
+  })
+}
+
+//获取不到返回值
+console.log(asyncFunc())
+
+let docs = [{}, {}, {}]
+
+// 并发写法
+let getAsync = async () => {
+  let promises = docs.map(item => (async () => {
+    item = await asyncFunc()
+  })())
+
+  await Promise.all(promises)
+  // 输出[{x: 1}, {x: 1}, {x: 1}]
+  console.log(docs)
+}
+getAsync()
+
+// 继发写法
+let getAsync = async () => {
+  for (let doc of docs) {
+    doc.x = await asyncFunc()
+  }
+  console.log(docs)
+}
+getAsync()
+
+```
