@@ -1,73 +1,77 @@
 import mongoose from 'mongoose'
 import { UserModal, UserInfoModal } from '../models/user'
-import { addListener } from 'cluster';
 
 const mongoUrl = 'mongodb://localhost/taobao'
 
 const login = (req, res) => {
-    let { account, password } = req.body
-    let error = null
-    mongoose.connect(mongoUrl, function(err) {
-        if (!err) {
-            console.log('连接成功')
-            UserModal.find(function(err, docs) {
-                let arr = docs.filter(item => String(item.account) === account)
-                if (arr.length === 0) {
-                    error = '账号不存在'
-                } else if (arr[0].password !== password){
-                    error = '密码不正确'
-                }
-
-                if (error) {
-                    res.setHeader('Content-Type','text/javascript;charset=UTF-8');
-                    res.send({ success: false, error});
-                } else {
-                    res.send({ success: true,  uid: arr[0].uid })
-                }
-                // res.end()
-
-            })
+  let { account, password } = req.body
+  let error = null
+  mongoose.connect(mongoUrl, function (err) {
+    if (!err) {
+      console.log('连接成功')
+      UserModal.find(function (err, docs) {
+        let arr = docs.filter(item => String(item.account) === account)
+        if (arr.length === 0) {
+          error = '账号不存在'
+        } else if (arr[0].password !== password) {
+          error = '密码不正确'
         }
-    })
+
+        if (error) {
+          res.setHeader('Content-Type', 'text/javascript;charset=UTF-8')
+          res.send({ success: false, error })
+        } else {
+
+          // 设置两周的缓存
+          res.setHeader('Set-Cookie', `uid=${arr[0].uid};Max-age=${86400 * 7 * 2};Path=/`)
+          res.send({ success: true, uid: arr[0].uid })
+        }
+        // res.end()
+
+      })
+    }
+  })
 }
 
 const register = (req, res) => {
-    let { account, password } = req.body
-    let error = null
-    mongoose.connect(mongoUrl, err => {
-        if (!err) {
-            UserModal.find((err, docs) => {
-                let uid = docs.length + 1
-                let arr = docs.filter(item => String(item.account) === account)
-                if (arr.length > 0) {
-                    error = '账号已经存在'
-                }
-
-                if (!error) {
-                    let user = new UserModal({ uid, account: Number(account), password })
-                    user.save((err, docs) => {
-                        if (err) {
-                            error = '注册失败'
-                        }
-                    })
-                }
-
-                if (!error) {
-                    res.send({ success: true, uid })
-                } else {
-                    res.send({ success: false, error })
-                }
-            })
+  let { account, password } = req.body
+  let error = null
+  mongoose.connect(mongoUrl, err => {
+    if (!err) {
+      UserModal.find((err, docs) => {
+        let uid = docs.length + 1
+        let arr = docs.filter(item => String(item.account) === account)
+        if (arr.length > 0) {
+          error = '账号已经存在'
         }
-    })
+
+        if (!error) {
+          let user = new UserModal({ uid, account: Number(account), password })
+          user.save((err, docs) => {
+            if (err) {
+              error = '注册失败'
+            }
+          })
+        }
+
+        if (!error) {
+          res.setHeader('Set-Cookie', `uid=${uid};Max-age=${86400 * 7 * 2};Path=/`)
+          res.send({ success: true, uid })
+        } else {
+          res.send({ success: false, error })
+        }
+      })
+    }
+  })
 }
 
 const getUserInfo = async (req, res) => {
-  let { params } = req
+  let { uid } = req.cookies
   try {
     await mongoose.connect(mongoUrl)
-    let { addressList = [] } = await UserInfoModal.findOne(params) || {}
-    res.send({ success: true, addressList })
+    let { addressList = [] } = await UserInfoModal.findOne({uid}) || {}
+
+    res.jsonp({ success: true, addressList })
   } catch (err) {
     res.send({ success: false, error: err })
   }
@@ -75,11 +79,10 @@ const getUserInfo = async (req, res) => {
 
 const setUserInfo = async (req, res) => {
   let params = req.body
-  let { uid } = params
-  delete params.uid
+  let { uid } = req.cookies
   try {
     await mongoose.connect(mongoUrl)
-    let docs = await UserInfoModal.update({ uid }, params, { upsert:true })
+    let docs = await UserInfoModal.update({ uid }, params, { upsert: true })
     res.send({ success: true })
 
   } catch (err) {
@@ -88,7 +91,8 @@ const setUserInfo = async (req, res) => {
 }
 
 const addAddress = async (req, res) => {
-  let { uid, name, phone, location, address } = req.body
+  let { name, phone, location, address } = req.body
+  let { uid } = req.cookies
   try {
     await mongoose.connect(mongoUrl)
     let doc = await UserInfoModal.findOne({ uid })
@@ -105,7 +109,8 @@ const addAddress = async (req, res) => {
 }
 
 const delAddress = async (req, res) => {
-  let { uid, index } = req.body
+  let { index } = req.body
+  let { uid } = req.cookies
   try {
     await mongoose.connect(mongoUrl)
     let { addressList } = await UserInfoModal.findOne({ uid })
@@ -122,10 +127,10 @@ const delAddress = async (req, res) => {
 
 
 module.exports = {
-    login,
-    register,
-    getUserInfo,
-    setUserInfo,
-    addAddress,
-    delAddress
+  login,
+  register,
+  getUserInfo,
+  setUserInfo,
+  addAddress,
+  delAddress
 }
